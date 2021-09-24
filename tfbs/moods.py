@@ -4,6 +4,7 @@ import numpy as np
 import MOODS.parsers
 import MOODS.scan
 import MOODS.tools
+import itertools
 from multiprocessing import Pool
 from itertools import groupby, chain, islice
 
@@ -28,6 +29,7 @@ class PWM:
 
         self.PWM = self.calculate_pwm()
         self.threshold = self.calculate_threshold(threshold)
+        self.width = np.size(self.PWM, 1)
 
     def calculate_pwm(self):
         return np.log(self.PPM()) - np.log(self._bg_col_vec)
@@ -54,18 +56,13 @@ class PWM:
                 self.PWM, self.background, threshold[1], 2000.0, 4
             )
         elif threshold[0] == "score":
+            # manually calculate percentage of maximum score
             range = self.PWM.max(axis=0) - self.PWM.min(axis=0)
             th = np.sum(self.PWM.min(axis=0) + (threshold[1] * range))
         else:
             raise Exception("threshold not formatted correctly")
 
         return th
-            
-
-
-# creates tuple of tuples, make this into a test of pfm_to_log_odds function
-# pfm_file = "/home/malcolm/Data/Regulation/SELEX/matrices/ALX3_AE_TGCAAG20NGA_NTAATYNRATTAN_m1_c2_Cell2013.pfm"
-# x = MOODS.parsers.pfm_to_log_odds(pfm_file, [0.25,0.25,0.25,0.25], 0.8)
 
 
 def iter_fasta(filename):
@@ -78,27 +75,21 @@ def iter_fasta(filename):
                 yield header, "".join(s.strip() for s in group)
 
 
-# @dataclass
-# class Hit:
-#     '''Class for keeping track of PWM hits.'''
-#     TF: str
-#     pos: float
-#     score: float
-#     strand: str
-
-Hit = namedtuple("Hit", "TF start score strand")
+Hit = namedtuple("Hit", "TF start end score strand")
 
 
 class Scanner:
     def __init__(self, pwms, background=(0.25, 0.25, 0.25, 0.25)):
 
-        matrices = [p.tuples() for p in pwms]
-        matrices_rc = [p.tuples_rc() for p in pwms]
+        matrices = []
+        thresholds = []
 
-        thresholds = [p.threshold for p in pwms]
+        for pwm in pwms:
+            matrices.extend([pwm.tuples(), pwm.tuples_rc()])
+            thresholds.extend([pwm.threshold] * 2)
 
         scanner = MOODS.scan.Scanner(7)  # why 7 lol
-        scanner.set_motifs(matrices + matrices_rc, background, thresholds + thresholds)
+        scanner.set_motifs(matrices, background, thresholds)
 
         self.pwms = pwms
         self.scanner = scanner
@@ -107,22 +98,17 @@ class Scanner:
     def scan(self, seq: tuple[str, str]):
         results = {
             "header": seq[0],
-            "seq": seq[1],
             "hits": [],
         }
-
-        n_pwms = len(self.pwms)
 
         raw = self.scanner.scan(seq[1])
 
         for i, rs in enumerate(raw):
-            if i >= n_pwms:
-                i = i % len(self.pwms)
-                strand = "-"
-            else:
-                strand = "+"
-            tf_name = self.pwms[i].id
-            results["hits"].extend([Hit(tf_name, r.pos, r.score, strand) for r in rs])
+            strand = "+" if i % 2 == 1 else "-"  # odd pwms are reverse complement
+            pwm_index = i // 2 # divide index by 2 due to rc pwms
+            id = self.pwms[pwm_index].id
+            width = self.pwms[pwm_index].width
+            results["hits"].extend([Hit(id, r.pos, r.pos + width, r.score, strand) for r in rs])
 
         return results
 
