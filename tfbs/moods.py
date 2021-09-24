@@ -6,11 +6,13 @@ import MOODS.parsers
 import MOODS.scan
 import MOODS.tools
 from itertools import groupby, chain, islice
+
 # from dataclasses import dataclass
 from collections import namedtuple
 
+
 class PWM:
-    def __init__(self, PFM, id, background=(0.25,0.25,0.25,0.25), pseudocount=0.8):
+    def __init__(self, PFM, id, background=(0.25, 0.25, 0.25, 0.25), pseudocount=0.8):
         self.PFM = np.array(PFM)
         self.id = id
         self.background = background
@@ -20,7 +22,9 @@ class PWM:
         self.PWM = self.calculate_pwm()
 
     def get_pvalue_threshold(self, pvalue):
-        return MOODS.tools.threshold_from_p_with_precision(self.PWM, self.background, pvalue, 2000.0, 4)
+        return MOODS.tools.threshold_from_p_with_precision(
+            self.PWM, self.background, pvalue, 2000.0, 4
+        )
 
     def PPM(self):
         pfm_adj = self.PFM + (self._bg_col_vec * self.pseudocount)
@@ -29,7 +33,7 @@ class PWM:
 
     def PWM_rc(self):
         return tuple(map(tuple, np.flip(self.PWM, axis=[0, 1])))
-        
+
     def calculate_pwm(self):
         return np.log(self.PPM()) - np.log(self._bg_col_vec)
 
@@ -45,14 +49,16 @@ class PWM:
 # pfm_file = "/home/malcolm/Data/Regulation/SELEX/matrices/ALX3_AE_TGCAAG20NGA_NTAATYNRATTAN_m1_c2_Cell2013.pfm"
 # x = MOODS.parsers.pfm_to_log_odds(pfm_file, [0.25,0.25,0.25,0.25], 0.8)
 
+
 def iter_fasta(filename):
     with open(filename, "r") as f:
         iterator = groupby(f, lambda line: line[0] == ">")
         for is_header, group in iterator:
             if is_header:
                 header = next(group)[1:].strip()
-            else: 
+            else:
                 yield header, "".join(s.strip() for s in group)
+
 
 # @dataclass
 # class Hit:
@@ -62,10 +68,13 @@ def iter_fasta(filename):
 #     score: float
 #     strand: str
 
-Hit = namedtuple('Hit', 'TF start score strand')
+Hit = namedtuple("Hit", "TF start score strand")
+
 
 class Scanner:
-    def __init__(self, pwms, background = (0.25,0.25,0.25,0.25), threshold="pvalue", value=0.001):
+    def __init__(
+        self, pwms, background=(0.25, 0.25, 0.25, 0.25), threshold="pvalue", value=0.001
+    ):
         # update TFs with PWMs and thresholds
         matrices = [p.PWM_to_tuples() for p in pwms]
         matrices_rc = [p.PWM_rc() for p in pwms]
@@ -75,7 +84,7 @@ class Scanner:
         elif threshold == "min_score":
             thresholds = [p.get_percent_score(value) for p in pwms]
 
-        scanner = MOODS.scan.Scanner(7) # why 7 lol
+        scanner = MOODS.scan.Scanner(7)  # why 7 lol
         scanner.set_motifs(matrices + matrices_rc, background, thresholds + thresholds)
 
         self.pwms = pwms
@@ -99,6 +108,7 @@ class Scanner:
 
         return results
 
+
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--pfms", required=True)
@@ -113,7 +123,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    pfms = json.load(open(args.pfms, 'r'))
+    pfms = json.load(open(args.pfms, "r"))
     pwms = [PWM(p["PFM"], p["label"]) for p in pfms]
 
     if args.pvalue and args.min_score:
@@ -137,7 +147,11 @@ if __name__ == "__main__":
     s = Scanner(pwms, threshold=threshold, value=value)
 
     def scan(fa_record):
-        return {"header": fa_record[0], "seq": fa_record[1], "hits": s.scan(fa_record[1])}
+        return {
+            "header": fa_record[0],
+            "seq": fa_record[1],
+            "hits": s.scan(fa_record[1]),
+        }
 
     p = multiprocessing.Pool(args.cores)
 
@@ -145,7 +159,7 @@ if __name__ == "__main__":
     for result in p.imap(scan, seqs):
         id = result["header"].split(":")[-1]
         for hit in result["hits"]:
-            print(id + ',' + ','.join(str(x) for x in hit))
+            print(id + "," + ",".join(str(x) for x in hit))
 
     # print(json.dumps(results, indent=4))
 
@@ -155,4 +169,3 @@ if __name__ == "__main__":
     #     id = r["header"].split(":")[-1]
     #     for hit in r["hits"]:
     #         print(id + ',' + ','.join(str(x) for x in hit))
-
