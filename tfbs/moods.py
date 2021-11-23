@@ -3,12 +3,12 @@ import json
 import MOODS.parsers
 import MOODS.scan
 import MOODS.tools
+import numpy as np
 from multiprocessing import Pool
-from itertools import islice
 from collections import namedtuple
 
-from pwm import PWM
-from utils import iter_fasta
+from tfbs.pwm import PWM
+from tfbs.utils import iter_fasta
 
 
 Hit = namedtuple("Hit", "TF start end score strand")
@@ -21,7 +21,7 @@ class Scanner:
         thresholds = []
 
         for pwm in pwms:
-            matrices.extend([pwm.pwm_to_tuples(), pwm.rev_pwm_to_tuples()])
+            matrices.extend([pwm.PWM, np.flip(pwm.PWM, axis=[0, 1])])
             thresholds.extend([pwm.threshold] * 2)
 
         scanner = MOODS.scan.Scanner(7)  # why 7 lol
@@ -41,10 +41,12 @@ class Scanner:
 
         for i, rs in enumerate(raw):
             strand = "+" if i % 2 == 1 else "-"  # odd pwms are reverse complement
-            pwm_index = i // 2 # divide index by 2 due to rc pwms
+            pwm_index = i // 2  # divide index by 2 due to rc pwms
             id = self.pwms[pwm_index].id
             width = self.pwms[pwm_index].width
-            results["hits"].extend([Hit(id, r.pos, r.pos + width, r.score, strand) for r in rs])
+            results["hits"].extend(
+                [Hit(id, r.pos, r.pos + width, r.score, strand) for r in rs]
+            )
 
         return results
 
