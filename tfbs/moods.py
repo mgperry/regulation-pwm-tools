@@ -11,7 +11,7 @@ from tfbs.pwm import PWM
 from tfbs.utils import iter_fasta
 
 
-Hit = namedtuple("Hit", "TF start end score strand")
+Hit = namedtuple("Hit", ["TF", "start", "end", "score" "strand"])
 
 
 class Scanner:

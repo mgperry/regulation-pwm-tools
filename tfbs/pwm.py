@@ -41,14 +41,14 @@ class PWM:
         self.pvalue = pvalue
         self.threshold = MOODS.tools.threshold_from_p(self.PWM, background, pvalue)
 
-        self.scaling_factor = self.calculate_lambda()
         self.max_score = self.calculate_max_score()
+        self.scaling_factor = self.calculate_lambda()
 
     def calculate_max_score(self):
         return np.sum(self.PWM.max(axis=0))
 
     def calculate_lambda(self):
-        delta_S = self.max_score() - self.threshold
+        delta_S = self.max_score - self.threshold
         total_IC = np.sum(self.ICM)
         mismatch_bits = total_IC * 6 / 13.2
         return delta_S / mismatch_bits
