@@ -7,11 +7,11 @@ import numpy as np
 from multiprocessing import Pool
 from collections import namedtuple
 
-from tfbs.pwm import PWM
-from tfbs.utils import iter_fasta
+from .pwm import PWM
+from .utils import iter_fasta
 
 
-Hit = namedtuple("Hit", ["TF", "start", "end", "score" "strand"])
+Hit = namedtuple("Hit", ["seqname", "TF", "start", "end", "score", "strand"])
 
 
 class Scanner:
@@ -31,21 +31,20 @@ class Scanner:
         self.scanner = scanner
         self.background = background
 
-    def scan(self, seq: tuple[str, str]):
-        results = {
-            "header": seq[0],
-            "hits": [],
-        }
+    def scan(self, fa_record: tuple[str, str]):
+        header, seq = fa_record
 
-        raw = self.scanner.scan(seq[1])
+        raw = self.scanner.scan(seq)
+
+        results = []
 
         for i, rs in enumerate(raw):
             strand = "+" if i % 2 == 1 else "-"  # odd pwms are reverse complement
             pwm_index = i // 2  # divide index by 2 due to rc pwms
             id = self.pwms[pwm_index].id
             width = self.pwms[pwm_index].width
-            results["hits"].extend(
-                [Hit(id, r.pos, r.pos + width, r.score, strand) for r in rs]
+            results.extend(
+                [Hit(header, id, r.pos, r.pos + width, r.score, strand) for r in rs]
             )
 
         return results
