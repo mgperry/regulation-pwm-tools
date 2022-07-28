@@ -1,14 +1,10 @@
-import argparse
-import json
+from collections import namedtuple
+
+import numpy as np
+
 import MOODS.parsers
 import MOODS.scan
 import MOODS.tools
-import numpy as np
-from multiprocessing import Pool
-from collections import namedtuple
-
-from .pwm import PWM
-from .utils import iter_fasta
 
 
 Hit = namedtuple("Hit", ["seqname", "TF", "start", "end", "score", "strand"])
@@ -39,7 +35,7 @@ class Scanner:
         results = []
 
         for i, rs in enumerate(raw):
-            strand = "+" if i % 2 == 1 else "-"  # odd pwms are reverse complement
+            strand = "+" if i % 2 else "-"  # odd pwms are reverse complement
             pwm_index = i // 2  # divide index by 2 due to rc pwms
             id = self.pwms[pwm_index].id
             width = self.pwms[pwm_index].width
@@ -49,30 +45,3 @@ class Scanner:
 
         return results
 
-
-parser = argparse.ArgumentParser()
-
-parser.add_argument("--pfms", required=True)
-parser.add_argument("--fasta", required=True)
-parser.add_argument("--pvalue", type=float, default=0.0001)
-parser.add_argument("--cores", default=4, type=int)
-
-
-if __name__ == "__main__":
-
-    args = parser.parse_args()
-
-    pfms = json.load(open(args.pfms, "r"))
-    pwms = [PWM(p["PFM"], p["label"], pvalue=args.pvalue) for p in pfms]
-
-    seqs = iter_fasta(args.fasta)
-
-    s = Scanner(pwms)
-
-    def scan(fa: tuple[str, str]):
-        return s.scan(fa)
-
-    with Pool(args.cores) as p:
-        results = list(p.map(scan, seqs))
-
-    print(json.dumps(results, indent=4))
