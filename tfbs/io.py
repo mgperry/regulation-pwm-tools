@@ -1,22 +1,40 @@
 import re
 from itertools import zip_longest
 import numpy as np
+from pathlib import Path
+
+
+def read_moods(d: str, suffix="*.pfm"):
+    """
+    Read in a directory of .pfm files, as required by MOODS (if not using this package).
+    """
+    d = Path(d)
+
+    if not d.is_dir: raise Exception("read_moods() must be supplied a directory.")
+
+    for pfm in d.glob(suffix):
+        yield {"name": pfm.stem, "PFM": read_pfm(pfm)}
+
+
+def read_pfm(f: str):
+    rows = open(f, 'r').readlines()
+    return np.array([extract_ints(row) for row in rows])
 
 
 def read_jaspar(f: str):
     """"
-    Read in JASPAR style matrix files (header following by 4 rows)
+    Read in JASPAR style matrix files (header following by 4 rows).
     """
     with open(f, 'r') as fh:
         for rows in grouper(5, fh):
             header = rows[0].rstrip()[1:] # strip leading '>'
             matrix = np.array([extract_ints(row) for row in rows[1:]])
-            yield (header, matrix)
+            yield {"name": header, "PFM": matrix}
 
 
 def extract_ints(s: str):
     """Extract and convert integers in a string."""
-    return [int(x) for x in re.findall("\d+", s)]
+    return [int(x) for x in re.findall(r"\d+", s)]
 
 
 def grouper(n, iterable):
