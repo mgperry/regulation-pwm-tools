@@ -5,6 +5,7 @@ import numpy as np
 import MOODS.parsers
 import MOODS.scan
 import MOODS.tools
+import pyfaidx
 
 
 Hit = namedtuple("Hit", ["seqname", "TF", "start", "end", "score", "strand"])
@@ -27,9 +28,9 @@ class Scanner:
         self.scanner = scanner
         self.background = background
 
-    def scan(self, fa_record):
-        header = fa_record.name
-        seq = fa_record.seq
+    def scan(self, seq: pyfaidx.FastaRecord):
+        header = seq.name
+        seq = seq.seq
 
         raw = self.scanner.scan(seq)
 
