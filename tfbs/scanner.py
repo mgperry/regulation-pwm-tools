@@ -27,8 +27,9 @@ class Scanner:
         self.scanner = scanner
         self.background = background
 
-    def scan(self, fa_record: tuple[str, str]):
-        header, seq = fa_record
+    def scan(self, fa_record):
+        header = fa_record.name
+        seq = fa_record.seq
 
         raw = self.scanner.scan(seq)
 

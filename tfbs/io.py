@@ -2,6 +2,7 @@ import re
 from itertools import zip_longest
 import numpy as np
 from pathlib import Path
+import json
 
 
 def read_moods(d: str, suffix="*.pfm"):
@@ -41,3 +42,10 @@ def grouper(n, iterable):
     "grouper(3, 'ABCDEFG') --> ABC DEF"
     args = [iter(iterable)] * n
     return zip_longest(*args)
+
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
