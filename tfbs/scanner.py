@@ -8,7 +8,7 @@ import MOODS.tools
 import pyfaidx
 
 
-Hit = namedtuple("Hit", ["seqname", "TF", "start", "end", "score", "strand"])
+Hit = namedtuple("Hit", ["seqname", "start", "end", "name", "score", "strand"])
 
 
 class Scanner:
@@ -42,7 +42,7 @@ class Scanner:
             id = self.pwms[pwm_index].id
             width = self.pwms[pwm_index].width
             results.extend(
-                [Hit(header, id, r.pos, r.pos + width, r.score, strand) for r in rs]
+                [Hit(header, r.pos, r.pos + width, id, r.score, strand) for r in rs]
             )
 
         return results

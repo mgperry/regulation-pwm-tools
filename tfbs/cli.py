@@ -38,10 +38,10 @@ def scan(pfms: str, fasta: str, bed: str, pvalue: float, cores: int):
 
     results = itertools.chain(*(s.scan(seq) for seq in seqs))
 
-    print("\t".join(Hit._fields))
+    # print("\t".join(Hit._fields))
 
     for hit in results:
-        print("%s\t%s\t%d\t%d\t%.2f\t%s" % hit)
+        print("%s\t%d\t%d\t%s\t%.2f\t%s" % hit)
 
 
 readers = {
