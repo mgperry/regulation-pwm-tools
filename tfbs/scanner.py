@@ -7,9 +7,7 @@ import MOODS.scan
 import MOODS.tools
 import pyfaidx
 
-
 Hit = namedtuple("Hit", ["seqname", "start", "end", "name", "score", "strand"])
-
 
 class Scanner:
     def __init__(self, pwms, background=(0.25, 0.25, 0.25, 0.25)):
@@ -28,21 +26,19 @@ class Scanner:
         self.scanner = scanner
         self.background = background
 
-    def scan(self, seq: pyfaidx.FastaRecord):
-        header = seq.name
-        seq = seq.seq
+    def scan(self, seq: pyfaidx.Sequence):
 
-        raw = self.scanner.scan(seq)
+        hits_by_tf = self.scanner.scan(seq.seq)
 
         results = []
 
-        for i, rs in enumerate(raw):
+        for i, hits in enumerate(hits_by_tf):
             strand = "+" if i % 2 else "-"  # odd pwms are reverse complement
             pwm_index = i // 2  # divide index by 2 due to rc pwms
             id = self.pwms[pwm_index].id
             width = self.pwms[pwm_index].width
             results.extend(
-                [Hit(header, r.pos, r.pos + width, id, r.score, strand) for r in rs]
+                [Hit(seq.name, seq.start + h.pos - 1, seq.start + h.pos + width - 1, id, h.score, strand) for h in hits]
             )
 
         return results

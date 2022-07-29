@@ -1,12 +1,11 @@
 import json
-import itertools
 import click
 import sys
 
 from pyfaidx import Fasta
 from pybedtools import BedTool
 
-from .scanner import Scanner, Hit
+from .scanner import Scanner
 from .pwm import PWM
 from .io import read_jaspar, read_moods, NumpyEncoder
 
@@ -36,12 +35,12 @@ def scan(pfms: str, fasta: str, bed: str, pvalue: float, cores: int):
 
     s = Scanner(pwms)
 
-    results = itertools.chain(*(s.scan(seq) for seq in seqs))
+    hits_by_seq = (s.scan(seq) for seq in seqs)
 
-    # print("\t".join(Hit._fields))
-
-    for hit in results:
-        print("%s\t%d\t%d\t%s\t%.2f\t%s" % hit)
+    for hits in hits_by_seq:
+        for hit in hits:
+            bed = hit._replace(start = hit[1] - 1)
+            print("%s\t%d\t%d\t%s\t%.2f\t%s" % bed)
 
 
 readers = {
