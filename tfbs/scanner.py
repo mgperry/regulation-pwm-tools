@@ -26,7 +26,7 @@ class Scanner:
         self.scanner = scanner
         self.background = background
 
-    def scan(self, seq: pyfaidx.Sequence):
+    def scan(self, seq: pyfaidx.Sequence, simplify=True):
 
         hits_by_tf = self.scanner.scan(seq.seq)
 
@@ -37,9 +37,15 @@ class Scanner:
             pwm_index = i // 2  # divide index by 2 due to rc pwms
             id = self.pwms[pwm_index].id
             width = self.pwms[pwm_index].width
-            results.extend(
-                [Hit(seq.name, seq.start + h.pos - 1, seq.start + h.pos + width - 1, id, h.score, strand) for h in hits]
-            )
+            if simplify:
+                results.extend(
+                    [Hit(seq.name, seq.start + h.pos - 1, seq.start + h.pos + width - 1, id, h.score, strand) for h in hits]
+                )
+            else:
+                results.append(
+                    [Hit(seq.name, seq.start + h.pos - 1, seq.start + h.pos + width - 1, id, h.score, strand) for h in hits]
+                )
+
 
         return results
 
