@@ -39,8 +39,7 @@ def scan(pfms: str, fasta: str, bed: str, pvalue: float, cores: int):
 
     for hits in hits_by_seq:
         for hit in hits:
-            bed = hit._replace(start = hit[1] - 1)
-            print("%s\t%d\t%d\t%s\t%.2f\t%s" % bed)
+            print(hit.to_bed())
 
 
 readers = {

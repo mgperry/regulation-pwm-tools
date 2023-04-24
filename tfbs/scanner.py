@@ -1,4 +1,4 @@
-from collections import namedtuple
+from dataclasses import dataclass, replace
 
 import numpy as np
 
@@ -7,7 +7,26 @@ import MOODS.scan
 import MOODS.tools
 import pyfaidx
 
-Hit = namedtuple("Hit", ["seqname", "start", "end", "name", "score", "strand"])
+
+@dataclass(frozen=True)
+class Range:
+    """
+    Class representing a genomic range or interval.
+
+    NB this uses "GRanges" style inclusive ranges, not BED-style insanity.
+    """
+
+    chr: str
+    start: int
+    end: int
+    name: str = "."
+    score: float = 0
+    strand: str = "."
+
+    def to_bed(self) -> str:
+        bed = replace(self, start = self.start - 1)
+        return "%s\t%d\t%d\t%s\t%.2f\t%s" % bed
+
 
 class Scanner:
     def __init__(self, pwms, background=(0.25, 0.25, 0.25, 0.25)):
@@ -26,7 +45,7 @@ class Scanner:
         self.scanner = scanner
         self.background = background
 
-    def scan(self, seq: pyfaidx.Sequence, simplify=True):
+    def scan(self, seq: pyfaidx.Sequence, simplify=True) -> list[Range]:
 
         hits_by_tf = self.scanner.scan(seq.seq)
 
@@ -39,11 +58,11 @@ class Scanner:
             width = self.pwms[pwm_index].width
             if simplify:
                 results.extend(
-                    [Hit(seq.name, seq.start + h.pos - 1, seq.start + h.pos + width - 1, id, h.score, strand) for h in hits]
+                    [Range(seq.name, seq.start + h.pos - 1, seq.start + h.pos + width - 1, id, h.score, strand) for h in hits]
                 )
             else:
                 results.append(
-                    [Hit(seq.name, seq.start + h.pos - 1, seq.start + h.pos + width - 1, id, h.score, strand) for h in hits]
+                    [Range(seq.name, seq.start + h.pos - 1, seq.start + h.pos + width - 1, id, h.score, strand) for h in hits]
                 )
 
 
