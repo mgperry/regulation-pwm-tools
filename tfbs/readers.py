@@ -3,6 +3,12 @@ from itertools import zip_longest
 import numpy as np
 from pathlib import Path
 import json
+from .pwm import PWM
+
+
+def load_pwms(jsn: str, pvalue: float, fields=("PFM", "name")) -> list[PWM]:
+    pfms = json.load(open(pfms, "r"))
+    return [PWM(p["PFM"], p["name"], pvalue=pvalue) for p in pfms]
 
 
 def read_moods(d: str, suffix="*.pfm"):
@@ -14,10 +20,10 @@ def read_moods(d: str, suffix="*.pfm"):
     if not d.is_dir: raise Exception("read_moods() must be supplied a directory.")
 
     for pfm in d.glob(suffix):
-        yield {"name": pfm.stem, "PFM": read_pfm(pfm)}
+        yield {"name": pfm.stem, "PFM": read_pfm_from_file(pfm)}
 
 
-def read_pfm(f: str):
+def read_pfm_from_file(f: str) -> np.ndarray:
     rows = open(f, 'r').readlines()
     return np.array([extract_ints(row) for row in rows])
 

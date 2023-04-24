@@ -7,7 +7,7 @@ from pybedtools import BedTool
 
 from .scanner import Scanner
 from .pwm import PWM
-from .readers import read_jaspar, read_moods, NumpyEncoder
+from .readers import load_pwms, read_jaspar, read_moods, NumpyEncoder
 
 @click.group()
 def cli():
@@ -23,8 +23,7 @@ def scan(pfms: str, fasta: str, bed: str, pvalue: float, cores: int):
     if cores > 1:
         print("multicore not yet available", file=sys.stderr)
 
-    pfms = json.load(open(pfms, "r"))
-    pwms = [PWM(p["PFM"], p["name"], pvalue=pvalue) for p in pfms]
+    pwms = load_pwms(pfms, pvalue)
 
     fa = Fasta(fasta)
 
