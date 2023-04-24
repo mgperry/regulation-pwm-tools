@@ -7,7 +7,7 @@ from pybedtools import BedTool
 
 from .scanner import Scanner
 from .pwm import PWM
-from .io import read_jaspar, read_moods, NumpyEncoder
+from .readers import read_jaspar, read_moods, NumpyEncoder
 
 @click.group()
 def cli():
