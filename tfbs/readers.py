@@ -3,12 +3,13 @@ from itertools import zip_longest
 import numpy as np
 from pathlib import Path
 import json
-from .pwm import PWM
+
+from .motif import Motif
 
 
-def load_pwms(jsn: str, pvalue: float, fields=("PFM", "name")) -> list[PWM]:
-    pfms = json.load(open(pfms, "r"))
-    return [PWM(p["PFM"], p["name"], pvalue=pvalue) for p in pfms]
+def load_pwms(jsn: str, pvalue: float, pfm="PFM", name="name", **kwargs) -> list[Motif]:
+    pfms = json.load(open(jsn, "r"))
+    return [Motif.from_pfm(p[pfm], p[name], **kwargs) for p in pfms]
 
 
 def read_moods(d: str, suffix="*.pfm"):

@@ -7,21 +7,24 @@ import MOODS.scan
 import MOODS.tools
 import pyfaidx
 
+from .motif import Motif
 
 @dataclass(frozen=True)
-class Range:
+class TFBS:
     """
-    Class representing a genomic range or interval.
+    Class representing a TFBS as an interval, same fields as bed/GRanges.
 
     NB this uses "GRanges" style inclusive ranges, not BED-style insanity.
     """
 
+    __slots__ = ["chr", "start", "end", "name", "score", "strand"]
+
     chr: str
     start: int
     end: int
-    name: str = "."
-    score: float = 0
-    strand: str = "."
+    name: str
+    score: float
+    strand: str
 
     def to_bed(self) -> str:
         bed = replace(self, start = self.start - 1)
@@ -29,41 +32,44 @@ class Range:
 
 
 class Scanner:
-    def __init__(self, pwms, background=(0.25, 0.25, 0.25, 0.25)):
+    def __init__(self, motifs: list[Motif], background: tuple[int] =(0.25, 0.25, 0.25, 0.25)):
 
         matrices = []
         thresholds = []
 
-        for pwm in pwms:
-            matrices.extend([pwm.PWM, np.flip(pwm.PWM, axis=[0, 1])])
-            thresholds.extend([pwm.threshold] * 2)
+        for motif in motifs:
+            matrices.extend([motif.matrix, motif.complement])
+            thresholds.extend([motif.threshold] * 2)
 
         scanner = MOODS.scan.Scanner(7)  # why 7 lol
         scanner.set_motifs(matrices, background, thresholds)
 
-        self.pwms = pwms
+        self.motifs = motifs
         self.scanner = scanner
         self.background = background
 
-    def scan(self, seq: pyfaidx.Sequence, simplify=True) -> list[Range]:
+    def scan(self, seq: pyfaidx.Sequence, simplify=True) -> list[TFBS]:
 
         hits_by_tf = self.scanner.scan(seq.seq)
 
         results = []
 
         for i, hits in enumerate(hits_by_tf):
+            # check for empty
+            if not hits:
+                continue
+
             strand = "+" if i % 2 else "-"  # odd pwms are reverse complement
-            pwm_index = i // 2  # divide index by 2 due to rc pwms
-            id = self.pwms[pwm_index].id
-            width = self.pwms[pwm_index].width
+            motif_ix = i // 2  # divide index by 2 due to rc pwms
+            id = self.motifs[motif_ix].id
+            width = self.motifs[motif_ix].width
+            start = seq.start - 1
+            end = seq.start + width - 1
+            rs = [TFBS(seq.name, start + h.pos, end + h.pos, id, h.score, strand) for h in hits]
             if simplify:
-                results.extend(
-                    [Range(seq.name, seq.start + h.pos - 1, seq.start + h.pos + width - 1, id, h.score, strand) for h in hits]
-                )
+                results.extend(rs)
             else:
-                results.append(
-                    [Range(seq.name, seq.start + h.pos - 1, seq.start + h.pos + width - 1, id, h.score, strand) for h in hits]
-                )
+                results.append(rs)
 
 
         return results

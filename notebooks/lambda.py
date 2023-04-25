@@ -1,6 +1,6 @@
 #%%
 import numpy as np
-from tfbs.pwm import PWM, as_col_vec
+from tfbs.motif import PWM, as_col_vec
 from MOODS.tools import threshold_from_p
 
 test_pfm = {

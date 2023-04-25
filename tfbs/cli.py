@@ -6,7 +6,6 @@ from pyfaidx import Fasta
 from pybedtools import BedTool
 
 from .scanner import Scanner
-from .pwm import PWM
 from .readers import load_pwms, read_jaspar, read_moods, NumpyEncoder
 
 @click.group()
