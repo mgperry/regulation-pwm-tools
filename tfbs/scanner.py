@@ -48,7 +48,7 @@ class Scanner:
         self.scanner = scanner
         self.background = background
 
-    def scan(self, seq: pyfaidx.Sequence, simplify=True) -> list[TFBS]:
+    def scan(self, seq: pyfaidx.Sequence, relative=False) -> list[TFBS]:
 
         hits_by_tf = self.scanner.scan(seq.seq)
 
@@ -61,15 +61,20 @@ class Scanner:
 
             strand = "+" if i % 2 else "-"  # odd pwms are reverse complement
             motif_ix = i // 2  # divide index by 2 due to rc pwms
-            id = self.motifs[motif_ix].id
+
+            name = self.motifs[motif_ix].id
             width = self.motifs[motif_ix].width
-            start = seq.start - 1
-            end = seq.start + width - 1
-            rs = [TFBS(seq.name, start + h.pos, end + h.pos, id, h.score, strand) for h in hits]
-            if simplify:
-                results.extend(rs)
+
+            if not relative:
+                start = seq.start - 1
             else:
-                results.append(rs)
+                start = 0
+
+            end = start + width
+
+            rs = [TFBS(seq.name, start + h.pos, end + h.pos, name, h.score, strand) for h in hits]
+
+            results.extend(rs)
 
 
         return results

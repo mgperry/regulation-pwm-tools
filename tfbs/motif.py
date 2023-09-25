@@ -16,6 +16,7 @@ class Motif:
 
         self.width = np.size(self.matrix, 1)
         self.max_score = np.sum(self.matrix.max(axis=0))
+        self.consensus = "".join("ACGT"[i] for i in self.matrix.argmax(0))
 
     @property
     def complement(self):
