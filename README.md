@@ -3,7 +3,8 @@
 This package provides a more pythonic wrapper around the MOODS Cpp // swig motif
 scanning tool.
 
-There is also a notebook and some test data showing an example workflow.
+There is also a notebook and some test data showing an example workflow. The deps
+for this are included as poetry development dependencies.
 
 ## Package Structure
 
@@ -16,7 +17,7 @@ The `Scanner` class takes a list of motifs, and builds a scanner, which will eff
 scan a nucleotide sequence in one pass. This is a bit fiddly, since the scanner is not
 strand-aware, and returns hits by motif order. I've taken a similar approach to the
 `moods-py` script we use in regulation, but this is wrapped up so that the `.scan()`
-method takes a python string and outputs a list of `TFBS`s (small dataclass, effectively
+method takes a `pyfaidx.Sequence` and outputs a list of `TFBS`s (small dataclass, effectively
 just a `BED` row, tuples might be faster).
 
 There is also a cli `scan` command, which should be very similar to the `moods-py` script,

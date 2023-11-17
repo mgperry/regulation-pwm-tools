@@ -29,7 +29,7 @@ def scan(pfms: str, fasta: str, bed: str, pvalue: float, cores: int):
 
     s = Scanner(pwms)
 
-    hits_by_seq = (s.scan(seq.seq) for seq in seqs)
+    hits_by_seq = (s.scan(seq) for seq in seqs)
 
     for hits in hits_by_seq:
         for hit in hits:
