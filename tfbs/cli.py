@@ -1,4 +1,3 @@
-import json
 import click
 import sys
 
@@ -6,7 +5,7 @@ from pyfaidx import Fasta
 from pybedtools import BedTool
 
 from .scanner import Scanner
-from .readers import load_pwms, read_jaspar, read_moods, NumpyEncoder
+from .readers import load_pwms
 
 
 @click.command()
@@ -30,7 +29,7 @@ def scan(pfms: str, fasta: str, bed: str, pvalue: float, cores: int):
 
     s = Scanner(pwms)
 
-    hits_by_seq = (s.scan(seq) for seq in seqs)
+    hits_by_seq = (s.scan(seq.seq) for seq in seqs)
 
     for hits in hits_by_seq:
         for hit in hits:

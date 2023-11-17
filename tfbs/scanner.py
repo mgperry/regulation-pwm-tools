@@ -3,7 +3,6 @@ from dataclasses import dataclass, replace
 import MOODS.parsers
 import MOODS.scan
 import MOODS.tools
-import pyfaidx
 
 from .motif import Motif
 
@@ -46,12 +45,11 @@ class Scanner:
         self.scanner = scanner
         self.background = background
 
-    def scan(self, seq: pyfaidx.Sequence) -> list[TFBS]:
+    def scan(self, seq: str) -> list[TFBS]:
 
         results = []
 
-        for i, tf_matches in enumerate(self.scanner.scan(seq.seq)
-):
+        for i, tf_matches in enumerate(self.scanner.scan(seq)):
             # check for empty
             if not tf_matches:
                 continue
