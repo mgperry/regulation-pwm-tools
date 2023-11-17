@@ -8,9 +8,6 @@ from pybedtools import BedTool
 from .scanner import Scanner
 from .readers import load_pwms, read_jaspar, read_moods, NumpyEncoder
 
-@click.group()
-def cli():
-    pass
 
 @click.command()
 @click.option("--pfms", required=True)
@@ -38,21 +35,3 @@ def scan(pfms: str, fasta: str, bed: str, pvalue: float, cores: int):
     for hits in hits_by_seq:
         for hit in hits:
             print(hit.to_bed())
-
-
-readers = {
-    "jaspar": read_jaspar,
-    "moods": read_moods
-}
-
-
-@click.command()
-@click.argument('format', type=click.Choice(['jaspar', 'moods'], case_sensitive=False))
-@click.argument('input')
-def parse(input: str, format: str):
-    pfms = list(readers[format](input))
-    print(json.dumps(pfms, indent=4, cls=NumpyEncoder))
-
-
-cli.add_command(scan)
-cli.add_command(parse)

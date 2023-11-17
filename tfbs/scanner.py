@@ -1,7 +1,5 @@
 from dataclasses import dataclass, replace
 
-import numpy as np
-
 import MOODS.parsers
 import MOODS.scan
 import MOODS.tools
@@ -48,15 +46,14 @@ class Scanner:
         self.scanner = scanner
         self.background = background
 
-    def scan(self, seq: pyfaidx.Sequence, relative=False) -> list[TFBS]:
-
-        hits_by_tf = self.scanner.scan(seq.seq)
+    def scan(self, seq: pyfaidx.Sequence) -> list[TFBS]:
 
         results = []
 
-        for i, hits in enumerate(hits_by_tf):
+        for i, tf_matches in enumerate(self.scanner.scan(seq.seq)
+):
             # check for empty
-            if not hits:
+            if not tf_matches:
                 continue
 
             strand = "+" if i % 2 else "-"  # odd pwms are reverse complement
@@ -65,17 +62,12 @@ class Scanner:
             name = self.motifs[motif_ix].id
             width = self.motifs[motif_ix].width
 
-            if not relative:
-                start = seq.start - 1
-            else:
-                start = 0
-
+            start = seq.start - 1
             end = start + width
 
-            rs = [TFBS(seq.name, start + h.pos, end + h.pos, name, h.score, strand) for h in hits]
+            rs = [TFBS(seq.name, start + m.pos, end + m.pos, name, m.score, strand) for m in tf_matches]
 
             results.extend(rs)
-
 
         return results
 
